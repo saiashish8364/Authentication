@@ -3,34 +3,59 @@ import { useState, useRef } from "react";
 import classes from "./AuthForm.module.css";
 
 const AuthForm = () => {
+  const emailInputRef = useRef();
+  const passwordInputRef = useRef();
   const [isLogin, setIsLogin] = useState(true);
   const [request, setRequest] = useState(false);
 
   const switchAuthModeHandler = () => {
     setIsLogin((prevState) => !prevState);
   };
-  const requestSending = async () => {
+  const submitHandler = async (e) => {
+    e.preventDefault();
     setRequest(true);
-    try {
-      const response = await fetch(
-        "https://react-backend-test-1-default-rtdb.asia-southeast1.firebasedatabase",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            username: "ashish",
-          }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      if (!response.ok) {
-        console.log(response);
-      }
-    } catch (error) {
-      setRequest(false);
-      window.alert(error.message);
+    let url;
+    const enteredEmail = emailInputRef.current.value;
+    const enteredPassword = passwordInputRef.current.value;
+
+    if (isLogin) {
+      url =
+        "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyCLo-iRYfevzs5rYHOPaSovU-nFIPTtxyA";
+    } else {
+      url =
+        "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyCLo-iRYfevzs5rYHOPaSovU-nFIPTtxyA";
     }
+    fetch(url, {
+      method: "POST",
+      body: JSON.stringify({
+        email: enteredEmail,
+        password: enteredPassword,
+        returnSecureToken: true,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => {
+        if (res.ok) {
+          return res.json();
+        } else {
+          return res.json().then((data) => {
+            let errorMessage = "Authentication Failed";
+            // if (data && data.error && data.error.message) {
+            //   errorMessage = data.error.message;
+            // }
+            throw new Error(errorMessage);
+          });
+        }
+      })
+      .then((data) => {
+        console.log(data.idToken);
+      })
+      .catch((err) => {
+        alert(err.message);
+      })
+      .then(setRequest(false));
   };
 
   return (
@@ -39,18 +64,23 @@ const AuthForm = () => {
       <form>
         <div className={classes.control}>
           <label htmlFor="email">Your Email</label>
-          <input type="email" id="email" required />
+          <input type="email" id="email" required ref={emailInputRef} />
         </div>
         <div className={classes.control}>
           <label htmlFor="password">Your Password</label>
-          <input type="password" id="password" required />
+          <input
+            type="password"
+            id="password"
+            required
+            ref={passwordInputRef}
+          />
         </div>
         <div className={classes.actions}>
           {request ? (
             <p style={{ color: "white" }}>Sending request...</p>
           ) : (
-            <button type="submit" onClick={requestSending}>
-              {isLogin ? "Log In" : "Sign Up"}
+            <button type="submit" onClick={submitHandler}>
+              {isLogin ? "Log In" : "Create Account"}
             </button>
           )}
           <button
