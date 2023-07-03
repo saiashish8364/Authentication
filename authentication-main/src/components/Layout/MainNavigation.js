@@ -3,7 +3,7 @@ import { useHistory } from "react-router-dom";
 import classes from "./MainNavigation.module.css";
 import { useContext } from "react";
 import AuthContext from "../Store/AuthContext";
-
+let timer;
 const MainNavigation = () => {
   const history = useHistory();
   const ctx = useContext(AuthContext);
@@ -11,7 +11,13 @@ const MainNavigation = () => {
   const logoutHandler = () => {
     ctx.logout();
     history.replace("/auth");
+    clearTimeout(timer);
   };
+  if (isLoggedIn) {
+    timer = setTimeout(() => {
+      logoutHandler();
+    }, 300000);
+  }
   return (
     <header className={classes.header}>
       <Link to="/">
